@@ -6,6 +6,7 @@
 
 ### how to run
 ```bash
+yarn install
 make start
 ```
 you will see something like
