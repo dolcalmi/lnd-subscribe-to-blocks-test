@@ -1,5 +1,6 @@
 const fs = require('fs');
 const grpc = require('@grpc/grpc-js');
+const lnService = require('ln-service');
 const protoLoader = require('@grpc/proto-loader');
 
 const GRPC_HOST = 'localhost:10009'
@@ -32,7 +33,7 @@ let request = {
 };
 let call = client.registerBlockEpochNtfn(request);
 call.on('data', function({ height, hash } ) {
-  console.log(`Height: ${height} - ${hash.reverse().toString('hex')}`);
+  console.log(`From grpc client -> Height: ${height} - ${hash.reverse().toString('hex')}`);
 });
 call.on('status', function(status) {
   // The current status of the stream.
@@ -40,3 +41,11 @@ call.on('status', function(status) {
 call.on('end', function() {
   // The server has closed the stream.
 });
+
+const {lnd} = lnService.authenticatedLndGrpc({
+  cert: Buffer.from(tlsCert, 'utf8').toString('base64'),
+  macaroon: Buffer.from(macaroon, 'hex').toString('base64'),
+  socket: GRPC_HOST,
+});
+const sub = lnService.subscribeToBlocks({lnd});
+sub.on('block', ({id, height}) => console.log(`from lnService -> Height: ${height} - ${id}`));
